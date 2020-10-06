@@ -3,40 +3,71 @@ import 'package:bytebank/models/contact.dart';
 import 'package:bytebank/screens/contact_form.dart';
 import 'package:flutter/material.dart';
 
-class ContactsList extends StatelessWidget {
+class ContactsList extends StatefulWidget {
+  @override
+  ContactsListState createState() => ContactsListState();
+}
 
+class ContactsListState extends State<ContactsList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Contacts'),
       ),
-      body: FutureBuilder(
-          future: findAll(),
-          builder: (context, snapshot) {
-            final List<Contact> _contacts = snapshot.data;
-            return ListView.builder(
-              itemBuilder: (context, index) {
-                return _ContactItem(_contacts[index]);
-              },
-              itemCount: _contacts.length,
-            );
-          }),
+      body: FutureBuilder<List<Contact>>(
+        initialData: List(),
+        future: findAll(),
+        builder: (BuildContext content, AsyncSnapshot<dynamic> snapshot) {
+          debugPrint('oi');
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              break;
+            case ConnectionState.waiting:
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    CircularProgressIndicator(),
+                    Text('Loading')
+                  ],
+                ),
+              );
+              break;
+            case ConnectionState.active:
+              break;
+            case ConnectionState.done:
+              final List<Contact> contacts = snapshot.data;
+              return ListView.builder(
+                itemBuilder: (context, index) {
+                  final Contact contact = contacts[index];
+                  return _ContactItem(contact);
+                },
+                itemCount: contacts.length,
+              );
+              break;
+          }
+          return Text('Unknown error');
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context)
               .push(
-                MaterialPageRoute(
-                  builder: (context) => ContactForm(),
-                ),
-              )
+            MaterialPageRoute(
+              builder: (context) => ContactForm(),
+            ),
+          )
               .then(
-                (newContact) => debugPrint(newContact.toString()),
-              );
+            (newContact) {
+              setState(() {
+                debugPrint("newContact.toString()");
+              });
+            },
+          );
         },
-        child: Icon(
-          Icons.add,
-        ),
+        child: Icon(Icons.add),
       ),
     );
   }
